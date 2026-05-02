@@ -91,7 +91,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     bullet.setVisible(true);
     bullet.setScale(0.7);
     bullet.setDepth(DEPTH.bullets);
-    (bullet.body as Phaser.Physics.Arcade.Body).setVelocityY(250);
+    (bullet.body as Phaser.Physics.Arcade.Body).setVelocityY(290);
   }
 
   private flashWhite(): void {

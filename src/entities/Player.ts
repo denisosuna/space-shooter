@@ -13,6 +13,8 @@ export class Player extends Phaser.GameObjects.Sprite {
   private fireTimer = 0;
   private _bullets!: Phaser.Physics.Arcade.Group;
   private _gunLevel = 1;
+  private _shipLevel = 1;
+  private static readonly SHIP_TEXTURES = ['playerShip1', 'playerShip2', 'playerShip3'];
 
   constructor(scene: Phaser.Scene) {
     super(scene, GAME_WIDTH / 2, GAME_HEIGHT * 0.85, 'playerShip1');
@@ -50,6 +52,18 @@ export class Player extends Phaser.GameObjects.Sprite {
     return this._gunLevel;
   }
 
+  get shipLevel(): number {
+    return this._shipLevel;
+  }
+
+  get maxHP(): number {
+    return this.maxHealth;
+  }
+
+  private get minGunLevel(): number {
+    return this._shipLevel;
+  }
+
   upgradeGun(): void {
     if (this._gunLevel < 5) {
       this._gunLevel++;
@@ -57,7 +71,7 @@ export class Player extends Phaser.GameObjects.Sprite {
   }
 
   downgradeGun(): void {
-    if (this._gunLevel > 1) {
+    if (this._gunLevel > this.minGunLevel) {
       this._gunLevel--;
     }
   }
@@ -87,6 +101,34 @@ export class Player extends Phaser.GameObjects.Sprite {
 
   heal(amount: number): void {
     this.health = Math.min(this.maxHealth, this.health + amount);
+  }
+
+  levelUpShip(): boolean {
+    if (this._shipLevel >= 3) return false;
+    this._shipLevel++;
+    this.maxHealth += 10;
+    this.health = this.maxHealth;
+    this.setTexture(Player.SHIP_TEXTURES[this._shipLevel - 1]);
+
+    // Flash + scale animation
+    this.scene.tweens.add({
+      targets: this,
+      scaleX: 1.2,
+      scaleY: 1.2,
+      duration: 300,
+      yoyo: true,
+      ease: 'Back.easeOut',
+      onComplete: () => this.setScale(0.8),
+    });
+    this.scene.cameras.main.flash(300, 255, 255, 100);
+    this.scene.sound.play('sfxShieldUp', { volume: 0.7 });
+
+    // Ensure gun level is at least the new ship level
+    if (this._gunLevel < this._shipLevel) {
+      this._gunLevel = this._shipLevel;
+    }
+
+    return true;
   }
 
   private setupInput(): void {

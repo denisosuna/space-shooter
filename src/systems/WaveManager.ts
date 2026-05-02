@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, ENEMY_POOL_SIZE } from '../config/game.config';
 import { WAVES, ENEMY_CONFIGS, type WaveDefinition, type Formation } from '../config/waves.config';
+import { BossManager } from './BossManager';
 import type { Enemy } from '../entities/Enemy';
 import { createEnemyPool, createEnemyBulletPool } from '../entities/Enemy';
 
@@ -11,7 +12,9 @@ export class WaveManager {
   private currentWaveIndex = 0;
   private spawning = false;
   private waveCleared = false;
+  private waitingForBoss = false;
   private onWaveComplete?: (waveNum: number) => void;
+  private bossManager?: BossManager;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -31,8 +34,21 @@ export class WaveManager {
     return this.currentWaveIndex + 1;
   }
 
+  setBossManager(bm: BossManager): void {
+    this.bossManager = bm;
+  }
+
   setOnWaveComplete(callback: (waveNum: number) => void): void {
     this.onWaveComplete = callback;
+  }
+
+  /** Called by BossManager/GameScene when boss is defeated */
+  notifyBossDefeated(): void {
+    if (!this.waitingForBoss) return;
+    this.waitingForBoss = false;
+    this.waveCleared = true;
+    this.onWaveComplete?.(this.currentWaveIndex + 1);
+    this.nextWave();
   }
 
   startWaves(): void {
@@ -50,13 +66,29 @@ export class WaveManager {
       }
     }
 
+    // Do not auto-clear while waiting for boss
+    if (this.waitingForBoss) return;
+
     // Check if wave is cleared
     if (!this.spawning && !this.waveCleared) {
       const activeEnemies = this.enemyPool.countActive(true);
       if (activeEnemies === 0) {
         this.waveCleared = true;
-        this.onWaveComplete?.(this.currentWaveIndex + 1);
-        this.nextWave();
+
+        const nextWave = this.currentWaveIndex + 1; // 1-based wave that just ended
+        if (BossManager.isBossWave(nextWave) && this.bossManager) {
+          // Boss wave: fire callback, spawn boss, hold until boss dies
+          this.onWaveComplete?.(nextWave);
+          this.currentWaveIndex = nextWave - 1; // keep index pointing at this wave
+          const delay = 1500;
+          this.scene.time.delayedCall(delay, () => {
+            this.waitingForBoss = true;
+            this.bossManager!.trySpawnBoss(nextWave);
+          });
+        } else {
+          this.onWaveComplete?.(nextWave);
+          this.nextWave();
+        }
       }
     }
   }

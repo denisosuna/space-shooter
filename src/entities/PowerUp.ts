@@ -43,6 +43,44 @@ export class PowerUp extends Phaser.Physics.Arcade.Sprite {
     return this;
   }
 
+  spawnRecoverable(x: number, y: number): this {
+    this.powerUpType = 'gun';
+    this.setTexture('powerupBolt');
+    this.setPosition(x, y);
+    this.setActive(true);
+    this.setVisible(true);
+    this.setScale(0.8);
+    this.body.enable = true;
+    this.body.reset(x, y);
+
+    // Launch upward with random horizontal drift
+    const vx = Phaser.Math.Between(-80, 80);
+    this.body.setVelocity(vx, -120);
+
+    // Slow down and fall
+    this.scene.time.delayedCall(600, () => {
+      if (!this.active) return;
+      this.body.setVelocity(0, 60);
+    });
+
+    // Blinking tween
+    this.scene.tweens.add({
+      targets: this,
+      alpha: { from: 1, to: 0.3 },
+      duration: 300,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    // Auto-despawn after 4 seconds
+    this.scene.time.delayedCall(4000, () => {
+      if (this.active) this.deactivate();
+    });
+
+    return this;
+  }
+
   preUpdate(time: number, delta: number): void {
     super.preUpdate(time, delta);
 
@@ -56,6 +94,7 @@ export class PowerUp extends Phaser.Physics.Arcade.Sprite {
   deactivate(): void {
     this.setActive(false);
     this.setVisible(false);
+    this.setAlpha(1);
     this.body.enable = false;
     this.body.setVelocity(0, 0);
     this.scene.tweens.killTweensOf(this);

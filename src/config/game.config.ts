@@ -6,7 +6,7 @@ export const PLAYER = {
   fireRate: 200,
   maxHealth: 100,
   bulletSpeed: -600,
-  invincibleDuration: 1500,
+  invincibleDuration: 1100,  // shorter grace window
 } as const;
 
 export const BULLET_POOL_SIZE = 80;
@@ -14,7 +14,7 @@ export const ENEMY_POOL_SIZE = 30;
 export const ENEMY_BULLET_POOL_SIZE = 20;
 
 export const POWERUP = {
-  dropChance: 0.08,
+  dropChance: 0.06,  // less frequent drops
   shieldDuration: 5000,
   speedBoostDuration: 4000,
 } as const;

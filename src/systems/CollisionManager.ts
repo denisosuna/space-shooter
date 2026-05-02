@@ -104,6 +104,12 @@ export class CollisionManager {
     }
   }
 
+  spawnRecoverablePowerUp(x: number, y: number): void {
+    const powerUp = this.powerUpPool.get(x, y, 'powerupBolt') as PowerUp | null;
+    if (!powerUp) return;
+    powerUp.spawnRecoverable(x, y);
+  }
+
   private tryDropPowerUp(x: number, y: number): void {
     if (Math.random() >= POWERUP.dropChance) return;
 
