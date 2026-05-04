@@ -151,10 +151,11 @@ export class WaveManager {
         if (!configEntry) return;
 
         const config = ENEMY_CONFIGS[configEntry.type];
-        const enemy = this.enemyPool.get(spawn.x, spawn.y, config.textureKey) as Enemy | null;
+        const scaledConfig = this.scaleEnemyConfig(config);
+        const enemy = this.enemyPool.get(spawn.x, spawn.y, scaledConfig.textureKey) as Enemy | null;
 
         if (enemy) {
-          enemy.init(config, this.enemyBulletPool);
+          enemy.init(scaledConfig, this.enemyBulletPool);
         }
 
         spawnIndex++;
@@ -164,6 +165,21 @@ export class WaveManager {
         }
       },
     });
+  }
+
+  /** Scale enemy HP, speed, and fireRate based on current wave.
+   *  Starts kicking in from wave 6, ramps every 5 waves. */
+  private scaleEnemyConfig(base: import('../config/waves.config').EnemyConfig): import('../config/waves.config').EnemyConfig {
+    const wave = this.currentWaveIndex + 1;
+    if (wave <= 5) return base;
+
+    const tier = Math.floor((wave - 1) / 5); // 1 at wave 6-10, 2 at 11-15, etc.
+    return {
+      ...base,
+      health: Math.round(base.health * (1 + tier * 0.4)),         // +40% HP per 5 waves
+      speed: Math.round(base.speed * (1 + tier * 0.08)),          // +8% speed per tier
+      fireRate: Math.max(400, Math.round(base.fireRate * Math.pow(0.92, tier))), // -8% cooldown per tier
+    };
   }
 
   private getFormationPositions(count: number, formation: Formation): { x: number; y: number }[] {

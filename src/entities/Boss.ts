@@ -174,6 +174,9 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
   }
 
   private shoot(phase: BossPhase): void {
+    // Cap active boss bullets to avoid filling the screen
+    if (this._bulletGroup.countActive(true) >= 18) return;
+
     const { pattern, bulletCount, spreadAngle } = phase;
 
     switch (pattern) {

@@ -97,7 +97,7 @@ export class CollisionManager {
     bullet.setVisible(false);
     (bullet.body as Phaser.Physics.Arcade.Body).enable = false;
 
-    const killed = enemy.takeDamage(1);
+    const killed = enemy.takeDamage(this.player.bulletDamage);
     if (killed) {
       this.callbacks.onEnemyHit(enemy, enemy.getScore());
       this.tryDropPowerUp(enemy.x, enemy.y);
@@ -113,21 +113,28 @@ export class CollisionManager {
   private tryDropPowerUp(x: number, y: number): void {
     if (Math.random() >= POWERUP.dropChance) return;
 
-    // Decide type: gun only if not maxed AND at least 5 waves since last gun drop
+    // Gun: not maxed, wave gap >= 3 (was 5)
     const canDropGun = this.player.gunLevel < 5
-      && (this._currentWave - this.lastGunDropWave) >= 5;
+      && (this._currentWave - this.lastGunDropWave) >= 3;
 
-    let type: PowerUpType;
-    if (canDropGun && Math.random() < 0.5) {
-      type = 'gun';
-      this.lastGunDropWave = this._currentWave;
-    } else {
-      type = 'health';
+    // Weight table depends on game state
+    const weights: { type: PowerUpType; w: number }[] = [
+      { type: 'health', w: 30 },
+      { type: 'gun',    w: canDropGun ? 35 : 0 },
+      { type: 'bomb',   w: this.player.bombs < 4 ? 20 : 0 },
+      { type: 'shield', w: this.player.shieldHits < 6 ? 15 : 0 },
+    ];
+    const total = weights.reduce((s, e) => s + e.w, 0);
+    let rand = Math.random() * total;
+    let type: PowerUpType = 'health';
+    for (const entry of weights) {
+      rand -= entry.w;
+      if (rand <= 0) { type = entry.type; break; }
     }
+    if (type === 'gun') this.lastGunDropWave = this._currentWave;
 
     const powerUp = this.powerUpPool.get(x, y, 'powerupBolt') as PowerUp | null;
     if (!powerUp) return;
-
     powerUp.spawn(x, y, type);
   }
 
@@ -155,7 +162,9 @@ export class CollisionManager {
     bullet.setVisible(false);
 
     if (!this.player.invincible) {
-      this.callbacks.onPlayerHit(15);
+      if (!this.player.tryShieldAbsorb()) {
+        this.callbacks.onPlayerHit(15);
+      }
     }
   }
 
@@ -169,7 +178,9 @@ export class CollisionManager {
 
     enemy.takeDamage(999);
     if (!this.player.invincible) {
-      this.callbacks.onPlayerHit(30);
+      if (!this.player.tryShieldAbsorb()) {
+        this.callbacks.onPlayerHit(30);
+      }
     }
   }
 }

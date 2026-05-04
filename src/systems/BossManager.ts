@@ -83,10 +83,15 @@ export class BossManager {
   }
 
   /** Call when a player bullet hits the boss */
-  hitBoss(bullet: Phaser.Physics.Arcade.Sprite): void {
+  hitBoss(bullet: Phaser.Physics.Arcade.Sprite, damage: number): void {
     bullet.setActive(false);
     bullet.setVisible(false);
     (bullet.body as Phaser.Physics.Arcade.Body).enable = false;
-    this.boss.takeDamage(1);
+    this.boss.takeDamage(damage);
+  }
+
+  /** Direct damage (e.g. from bomb) */
+  hitBossDirectly(amount: number): void {
+    this.boss.takeDamage(amount);
   }
 }

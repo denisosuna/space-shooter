@@ -12,6 +12,12 @@ export class HUD {
   private gunLevelText!: Phaser.GameObjects.Text;
   private gunLevelIcon!: Phaser.GameObjects.Image;
   private currentMaxHealth: number = PLAYER.maxHealth;
+  // Combo
+  private comboText!: Phaser.GameObjects.Text;
+  // Bombs
+  private bombText!: Phaser.GameObjects.Text;
+  // Shield
+  private shieldText!: Phaser.GameObjects.Text;
 
   // Boss HP bar
   private bossBarContainer!: Phaser.GameObjects.Container;
@@ -81,6 +87,34 @@ export class HUD {
     });
     this.gunLevelText.setOrigin(1, 0);
     this.gunLevelText.setDepth(depth);
+
+    // Bomb counter (bottom-left)
+    this.bombText = this.scene.add.text(15, 748, 'BOMB x2', {
+      fontSize: '14px',
+      color: '#ff8800',
+      fontStyle: 'bold',
+    });
+    this.bombText.setDepth(depth);
+
+    // Shield counter (bottom-left, below bombs)
+    this.shieldText = this.scene.add.text(90, 748, '', {
+      fontSize: '14px',
+      color: '#44aaff',
+      fontStyle: 'bold',
+    });
+    this.shieldText.setDepth(depth);
+
+    // Combo (center, just below score) — hidden when combo = 1
+    this.comboText = this.scene.add.text(GAME_WIDTH / 2, 38, '', {
+      fontSize: '18px',
+      color: '#ff6600',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 3,
+    });
+    this.comboText.setOrigin(0.5, 0);
+    this.comboText.setDepth(depth);
+    this.comboText.setVisible(false);
 
     // Boss HP bar (hidden by default)
     this.bossBarBg = this.scene.add.graphics();
@@ -153,9 +187,38 @@ export class HUD {
     this.showCenterAnnouncement(`WAVE ${wave}`, '#ffffff', '#ff6600');
   }
 
+  updateCombo(combo: number, expired = false): void {
+    if (combo <= 1) {
+      if (expired && this.comboText.visible) {
+        this.scene.tweens.add({
+          targets: this.comboText, alpha: 0, duration: 300,
+          onComplete: () => { this.comboText.setVisible(false); this.comboText.setAlpha(1); },
+        });
+      } else {
+        this.comboText.setVisible(false);
+      }
+      return;
+    }
+    const colors = ['', '', '#ffcc00', '#ff8800', '#ff4400', '#ff0000', '#cc00ff', '#ff00cc', '#ffffff'];
+    this.comboText.setText(`${combo}x COMBO`);
+    this.comboText.setColor(colors[Math.min(combo, colors.length - 1)]);
+    this.comboText.setVisible(true);
+    this.scene.tweens.add({ targets: this.comboText, scale: { from: 1.3, to: 1 }, duration: 150, ease: 'Back.easeOut' });
+  }
+
+  updateBombs(count: number): void {
+    this.bombText.setText(`BOMB x${count}`);
+    this.bombText.setAlpha(count > 0 ? 1 : 0.3);
+  }
+
+  updateShield(hits: number): void {
+    if (hits <= 0) { this.shieldText.setText(''); return; }
+    this.shieldText.setText(`SHD x${hits}`);
+  }
+
   showLevelUp(shipLevel: number): void {
-    const names = ['', 'FIGHTER', 'DESTROYER', 'WARSHIP'];
-    this.showCenterAnnouncement(`LEVEL UP!\n${names[shipLevel]}`, '#ffff00', '#ff3300');
+    const names = ['', 'FIGHTER', 'DESTROYER', 'WARSHIP', 'GOLDEN EAGLE', 'PHANTOM', 'NEMESIS'];
+    this.showCenterAnnouncement(`LEVEL UP!\n${names[shipLevel] ?? ''}`, '#ffff00', '#ff3300');
   }
 
   showBossBar(name: string, hp: number, maxHp: number): void {

@@ -1,7 +1,21 @@
 import Phaser from 'phaser';
 import { DEPTH, GAME_HEIGHT } from '../config/game.config';
 
-export type PowerUpType = 'gun' | 'health';
+export type PowerUpType = 'gun' | 'health' | 'bomb' | 'shield';
+
+const TINTS: Record<PowerUpType, number> = {
+  gun:    0xffff00,
+  health: 0x00ff88,
+  bomb:   0xff4400,
+  shield: 0x44aaff,
+};
+
+const TEXTURES: Record<PowerUpType, string> = {
+  gun:    'powerupBolt',
+  health: 'powerupShield',
+  bomb:   'powerupBolt',
+  shield: 'powerupShield',
+};
 
 export class PowerUp extends Phaser.Physics.Arcade.Sprite {
   declare body: Phaser.Physics.Arcade.Body;
@@ -21,7 +35,8 @@ export class PowerUp extends Phaser.Physics.Arcade.Sprite {
 
   spawn(x: number, y: number, type: PowerUpType): this {
     this.powerUpType = type;
-    this.setTexture(type === 'gun' ? 'powerupBolt' : 'powerupShield');
+    this.setTexture(TEXTURES[type]);
+    this.setTint(TINTS[type]);
     this.setPosition(x, y);
     this.setActive(true);
     this.setVisible(true);

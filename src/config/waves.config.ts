@@ -48,41 +48,41 @@ export const BOSS_ARCHETYPES: BossConfig[] = [
     // Raider — wave 5, 20, 35 …
     name: 'RAIDER',
     textureKey: 'enemyRed5',
-    baseHp: 45,
+    baseHp: 80,
     scale: 2.0,
     score: 800,
     coinReward: 50,
     phases: [
-      { hpThreshold: 1.0, pattern: 'spread',  fireRate: 900,  bulletCount: 4, spreadAngle: 50, movement: 'lateral',  movementSpeed: 130 },
-      { hpThreshold: 0.5, pattern: 'aimed',   fireRate: 550,  bulletCount: 2, spreadAngle: 20, movement: 'lateral',  movementSpeed: 190 },
+      { hpThreshold: 1.0, pattern: 'spread', fireRate: 1300, bulletCount: 3, spreadAngle: 45, movement: 'lateral', movementSpeed: 110 },
+      { hpThreshold: 0.5, pattern: 'aimed',  fireRate: 850,  bulletCount: 2, spreadAngle: 15, movement: 'lateral', movementSpeed: 160 },
     ],
   },
   {
     // Destroyer — wave 10, 25, 40 …
     name: 'DESTROYER',
     textureKey: 'enemyGreen5',
-    baseHp: 75,
+    baseHp: 130,
     scale: 2.5,
     score: 1200,
     coinReward: 80,
     phases: [
-      { hpThreshold: 1.0, pattern: 'spread',  fireRate: 800,  bulletCount: 4, spreadAngle: 55, movement: 'zigzag',   movementSpeed: 140 },
-      { hpThreshold: 0.6, pattern: 'aimed',   fireRate: 500,  bulletCount: 3, spreadAngle: 20, movement: 'zigzag',   movementSpeed: 200 },
-      { hpThreshold: 0.3, pattern: 'barrage', fireRate: 300,  bulletCount: 6, spreadAngle: 70, movement: 'lateral',  movementSpeed: 240 },
+      { hpThreshold: 1.0, pattern: 'spread',  fireRate: 1100, bulletCount: 3, spreadAngle: 50, movement: 'zigzag',  movementSpeed: 110 },
+      { hpThreshold: 0.6, pattern: 'aimed',   fireRate: 800,  bulletCount: 2, spreadAngle: 15, movement: 'zigzag',  movementSpeed: 160 },
+      { hpThreshold: 0.3, pattern: 'barrage', fireRate: 600,  bulletCount: 4, spreadAngle: 60, movement: 'lateral', movementSpeed: 190 },
     ],
   },
   {
     // Overlord — wave 15, 30, 45 …
     name: 'OVERLORD',
     textureKey: 'enemyBlue5',
-    baseHp: 120,
+    baseHp: 200,
     scale: 3.0,
     score: 2000,
     coinReward: 120,
     phases: [
-      { hpThreshold: 1.0, pattern: 'spread',  fireRate: 700,  bulletCount: 6, spreadAngle: 65, movement: 'lateral',  movementSpeed: 110 },
-      { hpThreshold: 0.66, pattern: 'circle', fireRate: 500,  bulletCount: 10, spreadAngle: 360, movement: 'zigzag', movementSpeed: 80 },
-      { hpThreshold: 0.33, pattern: 'barrage', fireRate: 250, bulletCount: 7,  spreadAngle: 85, movement: 'zigzag',  movementSpeed: 220 },
+      { hpThreshold: 1.0, pattern: 'spread',  fireRate: 1000, bulletCount: 4, spreadAngle: 60,  movement: 'lateral', movementSpeed: 90  },
+      { hpThreshold: 0.66, pattern: 'circle', fireRate: 750,  bulletCount: 7, spreadAngle: 360, movement: 'zigzag',  movementSpeed: 70  },
+      { hpThreshold: 0.33, pattern: 'barrage', fireRate: 450, bulletCount: 5, spreadAngle: 75,  movement: 'zigzag',  movementSpeed: 170 },
     ],
   },
 ];
@@ -96,9 +96,10 @@ export function getBossConfig(wave: number): BossConfig | null {
   const archetypeIndex = Math.floor((cycleWave - 1) / 5); // 0→Raider, 1→Destroyer, 2→Overlord
   const base = BOSS_ARCHETYPES[archetypeIndex];
 
-  const hpScale = Math.pow(1.3, cycle);
+  const hpScale = Math.pow(1.6, cycle);    // +60% HP per cycle (was 25%)
   const speedScale = Math.pow(1.1, cycle);
-  const rateScale = Math.pow(0.9, cycle);
+  const rateScale = Math.pow(0.94, cycle);
+  const minRate = 380 + cycle * 50;
 
   return {
     ...base,
@@ -108,9 +109,10 @@ export function getBossConfig(wave: number): BossConfig | null {
     coinReward: Math.round(base.coinReward * hpScale),
     phases: base.phases.map((p) => ({
       ...p,
-      fireRate: Math.max(200, Math.round(p.fireRate * rateScale)),
+      fireRate: Math.max(minRate, Math.round(p.fireRate * rateScale)),
       movementSpeed: Math.round(p.movementSpeed * speedScale),
-      bulletCount: cycle >= 2 ? p.bulletCount + 1 : p.bulletCount,
+      // +1 bullet only every 3 cycles, capped at base + 2
+      bulletCount: Math.min(p.bulletCount + 2, p.bulletCount + Math.floor(cycle / 3)),
     })),
   };
 }
@@ -119,33 +121,33 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
   [EnemyType.Black]: {
     type: EnemyType.Black,
     health: 2,
-    speed: 110,
+    speed: 95,
     score: 100,
-    fireRate: 3200,
+    fireRate: 3500,
     textureKey: 'enemyBlack1',
   },
   [EnemyType.Blue]: {
     type: EnemyType.Blue,
-    health: 4,
-    speed: 120,
+    health: 3,
+    speed: 105,
     score: 150,
-    fireRate: 1500,
+    fireRate: 1700,
     textureKey: 'enemyBlue1',
   },
   [EnemyType.Green]: {
     type: EnemyType.Green,
     health: 5,
-    speed: 85,
+    speed: 75,
     score: 200,
-    fireRate: 1100,
+    fireRate: 1300,
     textureKey: 'enemyGreen1',
   },
   [EnemyType.Red]: {
     type: EnemyType.Red,
-    health: 8,
-    speed: 65,
+    health: 7,
+    speed: 55,
     score: 300,
-    fireRate: 900,
+    fireRate: 1100,
     textureKey: 'enemyRed1',
   },
 };

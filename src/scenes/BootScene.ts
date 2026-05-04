@@ -56,6 +56,9 @@ export class BootScene extends Phaser.Scene {
     this.load.image('playerShip1', 'assets/images/player/playerShip1.png');
     this.load.image('playerShip2', 'assets/images/player/playerShip2.png');
     this.load.image('playerShip3', 'assets/images/player/playerShip3.png');
+    this.load.image('playerShip4', 'assets/images/player/playerShip4.png');
+    this.load.image('playerShip5', 'assets/images/player/playerShip5.png');
+    this.load.image('playerShip6', 'assets/images/player/playerShip6.png');
 
     // Enemies
     const enemyColors = ['Black', 'Blue', 'Green', 'Red'];

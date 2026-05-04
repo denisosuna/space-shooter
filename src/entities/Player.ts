@@ -14,7 +14,20 @@ export class Player extends Phaser.GameObjects.Sprite {
   private _bullets!: Phaser.Physics.Arcade.Group;
   private _gunLevel = 1;
   private _shipLevel = 1;
-  private static readonly SHIP_TEXTURES = ['playerShip1', 'playerShip2', 'playerShip3'];
+  private lastX = 0;
+  private shadow!: Phaser.GameObjects.Sprite;
+  private _bombs = 2;
+  private _shieldHits = 0;
+  private shieldSprite!: Phaser.GameObjects.Arc;
+  private static readonly MAX_BOMBS = 4;
+  private static readonly SHIP_TEXTURES = [
+    'playerShip1', // nivel 1 — azul
+    'playerShip2', // nivel 2 — gris
+    'playerShip3', // nivel 3 — verde
+    'playerShip4', // nivel 4 — dorado
+    'playerShip5', // nivel 5 — violeta
+    'playerShip6', // nivel 6 — rojo
+  ];
 
   constructor(scene: Phaser.Scene) {
     super(scene, GAME_WIDTH / 2, GAME_HEIGHT * 0.85, 'playerShip1');
@@ -27,6 +40,21 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.setDepth(DEPTH.player);
     this.body.setCollideWorldBounds(true);
     this.setScale(0.8);
+
+    // Drop shadow — drawn just below the ship
+    this.shadow = scene.add.sprite(this.x + 8, this.y + 10, 'playerShip1');
+    this.shadow.setScale(0.8);
+    this.shadow.setTint(0x000000);
+    this.shadow.setAlpha(0.35);
+    this.shadow.setDepth(DEPTH.player - 1);
+
+    this.lastX = this.x;
+
+    // Shield visual
+    this.shieldSprite = scene.add.arc(this.x, this.y, 38, 0, 360, false, 0x44aaff, 0.35);
+    this.shieldSprite.setStrokeStyle(2, 0x88ccff, 0.9);
+    this.shieldSprite.setDepth(DEPTH.player + 1);
+    this.shieldSprite.setVisible(false);
 
     this.setupInput();
     this.createBulletPool();
@@ -52,12 +80,49 @@ export class Player extends Phaser.GameObjects.Sprite {
     return this._gunLevel;
   }
 
+  /** Damage dealt per bullet at current gun level */
+  get bulletDamage(): number {
+    // Level: 1→1, 2→1, 3→2, 4→2, 5→3
+    return Math.ceil(this._gunLevel / 2);
+  }
+
   get shipLevel(): number {
     return this._shipLevel;
   }
 
-  get maxHP(): number {
-    return this.maxHealth;
+  get maxHP(): number { return this.maxHealth; }
+  get bombs(): number { return this._bombs; }
+  get shieldHits(): number { return this._shieldHits; }
+  get hasShield(): boolean { return this._shieldHits > 0; }
+
+  addBomb(): void { this._bombs = Math.min(Player.MAX_BOMBS, this._bombs + 1); }
+
+  addShield(hits = 3): void {
+    this._shieldHits = Math.min(6, this._shieldHits + hits);
+    this.shieldSprite.setVisible(true);
+    this.scene.tweens.add({ targets: this.shieldSprite, alpha: { from: 0, to: 0.35 }, duration: 300 });
+  }
+
+  /** Returns true if shield absorbed the hit instead of HP. */
+  tryShieldAbsorb(): boolean {
+    if (this._shieldHits <= 0) return false;
+    this._shieldHits--;
+    // Flash shield
+    this.scene.tweens.add({ targets: this.shieldSprite, alpha: { from: 1, to: 0.35 }, duration: 200 });
+    if (this._shieldHits <= 0) {
+      this.shieldSprite.setVisible(false);
+      this.scene.cameras.main.flash(200, 68, 170, 255);
+    }
+    return true;
+  }
+
+  /** Returns list of active enemy+bullet groups for the bomb to affect. */
+  useBomb(): boolean {
+    if (this._bombs <= 0) return false;
+    this._bombs--;
+    this.scene.cameras.main.flash(300, 255, 255, 255);
+    this.scene.sound.play('sfxTwoTone', { volume: 0.7 });
+    return true;
   }
 
   private get minGunLevel(): number {
@@ -78,6 +143,22 @@ export class Player extends Phaser.GameObjects.Sprite {
 
   update(_time: number, delta: number): void {
     if (!this.isAlive) return;
+
+    // Banking: squish scaleX based on horizontal velocity
+    const dx = this.x - this.lastX;
+    this.lastX = this.x;
+    const targetScaleX = Phaser.Math.Clamp(0.8 - dx * 0.045, 0.45, 1.15);
+    this.scaleX = Phaser.Math.Linear(this.scaleX, targetScaleX, 0.25);
+
+    // Sync shadow
+    this.shadow.setPosition(this.x + 8, this.y + 10);
+    this.shadow.setScale(this.scaleX * 0.9, this.scaleY * 0.9);
+    this.shadow.setTexture(this.texture.key);
+
+    // Sync shield
+    if (this._shieldHits > 0) {
+      this.shieldSprite.setPosition(this.x, this.y);
+    }
 
     this.fireTimer += delta;
     if (this.fireTimer >= PLAYER.fireRate) {
@@ -104,11 +185,12 @@ export class Player extends Phaser.GameObjects.Sprite {
   }
 
   levelUpShip(): boolean {
-    if (this._shipLevel >= 3) return false;
+    if (this._shipLevel >= 6) return false;
     this._shipLevel++;
     this.maxHealth += 10;
     this.health = this.maxHealth;
     this.setTexture(Player.SHIP_TEXTURES[this._shipLevel - 1]);
+    this.shadow.setTexture(Player.SHIP_TEXTURES[this._shipLevel - 1]);
 
     // Flash + scale animation
     this.scene.tweens.add({
@@ -185,6 +267,14 @@ export class Player extends Phaser.GameObjects.Sprite {
     });
   }
 
+  private static readonly BULLET_TINTS = [
+    0x66bbff, // level 1 — blue
+    0x00ffff, // level 2 — cyan
+    0x00ff88, // level 3 — green
+    0xffcc00, // level 4 — gold
+    0xff4400, // level 5 — red/orange
+  ];
+
   private fireBullet(x: number, y: number, angle: number): void {
     const bullet = this._bullets.get(x, y, 'laserBlue01') as Phaser.Physics.Arcade.Sprite | null;
     if (!bullet) return;
@@ -194,6 +284,7 @@ export class Player extends Phaser.GameObjects.Sprite {
     bullet.setDepth(DEPTH.bullets);
     bullet.setScale(0.7);
     bullet.setRotation(angle);
+    bullet.setTint(Player.BULLET_TINTS[this._gunLevel - 1]);
     const body = bullet.body as Phaser.Physics.Arcade.Body;
     body.enable = true;
     body.reset(x, y);
@@ -220,6 +311,8 @@ export class Player extends Phaser.GameObjects.Sprite {
   }
 
   private die(): void {
+    this.shadow.setVisible(false);
+    this.shieldSprite.setVisible(false);
     this.scene.sound.play('sfxLose', { volume: 0.5 });
 
     // Explosion effect

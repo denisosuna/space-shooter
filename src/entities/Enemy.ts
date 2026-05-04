@@ -9,6 +9,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private hp = 0;
   private fireTimer = 0;
   private _enemyBullets!: Phaser.Physics.Arcade.Group;
+  private sineTime = 0;
+  private sineAmplitude = 0;
+  private sineFrequency = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
     super(scene, x, y, texture);
@@ -32,6 +35,19 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.body.enable = true;
     this.body.setVelocityY(config.speed);
     this.fireTimer = Phaser.Math.Between(0, config.fireRate);
+
+    // Sine-wave horizontal movement per type
+    this.sineTime = Math.random() * Math.PI * 2; // random phase offset
+    if (config.type === 'blue') {
+      this.sineAmplitude = 45;
+      this.sineFrequency = 1.2;
+    } else if (config.type === 'green') {
+      this.sineAmplitude = 28;
+      this.sineFrequency = 0.8;
+    } else {
+      this.sineAmplitude = 0;
+      this.sineFrequency = 0;
+    }
     return this;
   }
 
@@ -53,6 +69,14 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.fire();
         this.fireTimer = 0;
       }
+    }
+
+    // Sine-wave horizontal drift
+    if (this.sineAmplitude > 0) {
+      this.sineTime += delta / 1000;
+      const vx = Math.cos(this.sineTime * this.sineFrequency * Math.PI * 2)
+        * this.sineAmplitude * this.sineFrequency * Math.PI * 2;
+      this.body.setVelocityX(vx);
     }
   }
 
