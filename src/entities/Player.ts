@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, PLAYER, DEPTH, BULLET_POOL_SIZE } from '../config/game.config';
+import { GAME_WIDTH, GAME_HEIGHT, PLAYER, DEPTH, BULLET_POOL_SIZE, isReducedEffects } from '../config/game.config';
 
 export class Player extends Phaser.GameObjects.Sprite {
   declare body: Phaser.Physics.Arcade.Body;
@@ -111,7 +111,9 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.scene.tweens.add({ targets: this.shieldSprite, alpha: { from: 1, to: 0.35 }, duration: 200 });
     if (this._shieldHits <= 0) {
       this.shieldSprite.setVisible(false);
-      this.scene.cameras.main.flash(200, 68, 170, 255);
+      if (!isReducedEffects()) {
+        this.scene.cameras.main.flash(200, 68, 170, 255);
+      }
     }
     return true;
   }
@@ -120,7 +122,9 @@ export class Player extends Phaser.GameObjects.Sprite {
   useBomb(): boolean {
     if (this._bombs <= 0) return false;
     this._bombs--;
-    this.scene.cameras.main.flash(300, 255, 255, 255);
+    if (!isReducedEffects()) {
+      this.scene.cameras.main.flash(300, 255, 255, 255);
+    }
     this.scene.sound.play('sfxTwoTone', { volume: 0.7 });
     return true;
   }
@@ -143,6 +147,9 @@ export class Player extends Phaser.GameObjects.Sprite {
 
   update(_time: number, delta: number): void {
     if (!this.isAlive) return;
+
+    // Keyboard movement
+    this.handleKeyboardMovement(delta);
 
     // Banking: squish scaleX based on horizontal velocity
     const dx = this.x - this.lastX;
@@ -202,7 +209,9 @@ export class Player extends Phaser.GameObjects.Sprite {
       ease: 'Back.easeOut',
       onComplete: () => this.setScale(0.8),
     });
-    this.scene.cameras.main.flash(300, 255, 255, 100);
+    if (!isReducedEffects()) {
+      this.scene.cameras.main.flash(300, 255, 255, 100);
+    }
     this.scene.sound.play('sfxShieldUp', { volume: 0.7 });
 
     // Ensure gun level is at least the new ship level
@@ -213,7 +222,12 @@ export class Player extends Phaser.GameObjects.Sprite {
     return true;
   }
 
+  private cursorKeys!: Phaser.Types.Input.Keyboard.CursorKeys;
+
   private setupInput(): void {
+    // Keyboard arrow keys
+    this.cursorKeys = this.scene.input.keyboard!.createCursorKeys();
+
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       const bounds = this.getBounds();
       const expandedBounds = new Phaser.Geom.Rectangle(
@@ -257,6 +271,25 @@ export class Player extends Phaser.GameObjects.Sprite {
     this.scene.input.on('pointerup', () => {
       this.isDragging = false;
     });
+  }
+
+  private handleKeyboardMovement(delta: number): void {
+    if (!this.cursorKeys) return;
+    const speed = PLAYER.speed * (delta / 1000);
+    let dx = 0;
+    let dy = 0;
+    if (this.cursorKeys.left.isDown) dx -= speed;
+    if (this.cursorKeys.right.isDown) dx += speed;
+    if (this.cursorKeys.up.isDown) dy -= speed;
+    if (this.cursorKeys.down.isDown) dy += speed;
+
+    if (dx !== 0 || dy !== 0) {
+      const newX = Phaser.Math.Clamp(this.x + dx, this.displayWidth / 2, GAME_WIDTH - this.displayWidth / 2);
+      const newY = Phaser.Math.Clamp(this.y + dy, GAME_HEIGHT * 0.3, GAME_HEIGHT - this.displayHeight / 2);
+      this.x = newX;
+      this.y = newY;
+      this.body.reset(newX, newY);
+    }
   }
 
   private createBulletPool(): void {

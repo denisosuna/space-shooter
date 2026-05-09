@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { DEPTH, GAME_HEIGHT, ENEMY_BULLET_POOL_SIZE } from '../config/game.config';
+import { DEPTH, GAME_HEIGHT } from '../config/game.config';
 import type { EnemyConfig } from '../config/waves.config';
 
 export class Enemy extends Phaser.Physics.Arcade.Sprite {
@@ -9,6 +9,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   private hp = 0;
   private fireTimer = 0;
   private _enemyBullets!: Phaser.Physics.Arcade.Group;
+  private playerRef?: Phaser.GameObjects.Sprite;
   private sineTime = 0;
   private sineAmplitude = 0;
   private sineFrequency = 0;
@@ -24,10 +25,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     return this._enemyBullets;
   }
 
-  init(config: EnemyConfig, bulletGroup: Phaser.Physics.Arcade.Group): this {
+  init(config: EnemyConfig, bulletGroup: Phaser.Physics.Arcade.Group, player?: Phaser.GameObjects.Sprite): this {
     this.config = config;
     this.hp = config.health;
     this._enemyBullets = bulletGroup;
+    this.playerRef = player;
     this.setTexture(config.textureKey);
     this.setScale(0.7);
     this.setActive(true);
@@ -115,7 +117,24 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     bullet.setVisible(true);
     bullet.setScale(0.7);
     bullet.setDepth(DEPTH.bullets);
-    (bullet.body as Phaser.Physics.Arcade.Body).setVelocityY(290);
+
+    const body = bullet.body as Phaser.Physics.Arcade.Body;
+    const speed = 290;
+
+    if (this.playerRef && this.playerRef.active) {
+      // Aim at player with some spread so it's not perfectly accurate
+      const dx = this.playerRef.x - this.x;
+      const dy = this.playerRef.y - this.y;
+      const angle = Math.atan2(dy, dx);
+      const spread = (Math.random() - 0.5) * 0.35; // ~±10° random spread
+      body.setVelocity(
+        Math.cos(angle + spread) * speed,
+        Math.sin(angle + spread) * speed,
+      );
+      bullet.setRotation(angle + spread + Math.PI / 2);
+    } else {
+      body.setVelocityY(speed);
+    }
   }
 
   private flashWhite(): void {
@@ -138,20 +157,4 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.scene.sound.play('sfxZap', { volume: 0.3 });
     this.deactivate();
   }
-}
-
-export function createEnemyPool(scene: Phaser.Scene, size: number): Phaser.Physics.Arcade.Group {
-  return scene.physics.add.group({
-    classType: Enemy,
-    maxSize: size,
-    runChildUpdate: true,
-    allowGravity: false,
-  });
-}
-
-export function createEnemyBulletPool(scene: Phaser.Scene): Phaser.Physics.Arcade.Group {
-  return scene.physics.add.group({
-    maxSize: ENEMY_BULLET_POOL_SIZE,
-    allowGravity: false,
-  });
 }

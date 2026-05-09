@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, PLAYER, DEPTH } from '../config/game.config';
+import { GAME_WIDTH, GAME_HEIGHT, PLAYER, DEPTH, FONT_FAMILY } from '../config/game.config';
 
 export class HUD {
   private scene: Phaser.Scene;
@@ -18,6 +18,8 @@ export class HUD {
   private bombText!: Phaser.GameObjects.Text;
   // Shield
   private shieldText!: Phaser.GameObjects.Text;
+  // Pause button
+  private pauseBtn!: Phaser.GameObjects.Text;
 
   // Boss HP bar
   private bossBarContainer!: Phaser.GameObjects.Container;
@@ -25,19 +27,30 @@ export class HUD {
   private bossBarFill!: Phaser.GameObjects.Graphics;
   private bossNameText!: Phaser.GameObjects.Text;
 
+  private onPauseCallback?: () => void;
+
+  // Derived layout positions
+  private readonly HEALTH_BAR_Y = GAME_HEIGHT - 30;
+  private readonly BOTTOM_ROW_Y = GAME_HEIGHT - 52;
+
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.create();
   }
 
+  setOnPause(cb: () => void): void {
+    this.onPauseCallback = cb;
+  }
+
   private create(): void {
     const depth = DEPTH.hud;
+    const font = FONT_FAMILY;
 
     // Score
     this.scoreText = this.scene.add.text(GAME_WIDTH / 2, 15, 'SCORE: 0', {
-      fontSize: '20px',
+      fontFamily: font,
+      fontSize: '12px',
       color: '#ffffff',
-      fontStyle: 'bold',
     });
     this.scoreText.setOrigin(0.5, 0);
     this.scoreText.setDepth(depth);
@@ -49,66 +62,77 @@ export class HUD {
     this.coinIcon.setDepth(depth);
 
     this.coinText = this.scene.add.text(45, 16, '0', {
-      fontSize: '18px',
+      fontFamily: font,
+      fontSize: '10px',
       color: '#ffff00',
-      fontStyle: 'bold',
     });
     this.coinText.setDepth(depth);
 
     // Wave indicator
-    this.waveText = this.scene.add.text(GAME_WIDTH - 15, 15, 'WAVE 1', {
-      fontSize: '16px',
+    this.waveText = this.scene.add.text(GAME_WIDTH - 50, 15, 'WAVE 1', {
+      fontFamily: font,
+      fontSize: '10px',
       color: '#00ffff',
-      fontStyle: 'bold',
     });
     this.waveText.setOrigin(1, 0);
     this.waveText.setDepth(depth);
+
+    // Pause button (top-right corner)
+    this.pauseBtn = this.scene.add.text(GAME_WIDTH - 10, 12, '||', {
+      fontFamily: font,
+      fontSize: '14px',
+      color: '#aaaaaa',
+    });
+    this.pauseBtn.setOrigin(1, 0);
+    this.pauseBtn.setDepth(depth);
+    this.pauseBtn.setInteractive({ useHandCursor: true });
+    this.pauseBtn.on('pointerdown', () => this.onPauseCallback?.());
 
     // Health bar background
     this.healthBarBg = this.scene.add.graphics();
     this.healthBarBg.setDepth(depth);
     this.healthBarBg.fillStyle(0x333333, 0.8);
-    this.healthBarBg.fillRect(15, GAME_WIDTH < 500 ? 770 : 770, GAME_WIDTH - 30, 12);
+    this.healthBarBg.fillRect(15, this.HEALTH_BAR_Y, GAME_WIDTH - 30, 12);
 
     // Health bar fill
     this.healthBarFill = this.scene.add.graphics();
     this.healthBarFill.setDepth(depth);
 
     // Gun level indicator
-    this.gunLevelIcon = this.scene.add.image(GAME_WIDTH - 15, 38, 'powerupBolt');
+    this.gunLevelIcon = this.scene.add.image(GAME_WIDTH - 50, 32, 'powerupBolt');
     this.gunLevelIcon.setScale(0.4);
     this.gunLevelIcon.setOrigin(1, 0);
     this.gunLevelIcon.setDepth(depth);
 
-    this.gunLevelText = this.scene.add.text(GAME_WIDTH - 40, 40, 'Lv.1', {
-      fontSize: '14px',
+    this.gunLevelText = this.scene.add.text(GAME_WIDTH - 72, 34, 'Lv.1', {
+      fontFamily: font,
+      fontSize: '8px',
       color: '#ffcc00',
-      fontStyle: 'bold',
     });
     this.gunLevelText.setOrigin(1, 0);
     this.gunLevelText.setDepth(depth);
 
     // Bomb counter (bottom-left)
-    this.bombText = this.scene.add.text(15, 748, 'BOMB x2', {
-      fontSize: '14px',
+    this.bombText = this.scene.add.text(15, this.BOTTOM_ROW_Y, 'BOMB x2', {
+      fontFamily: font,
+      fontSize: '8px',
       color: '#ff8800',
-      fontStyle: 'bold',
     });
     this.bombText.setDepth(depth);
 
-    // Shield counter (bottom-left, below bombs)
-    this.shieldText = this.scene.add.text(90, 748, '', {
-      fontSize: '14px',
+    // Shield counter (next to bombs)
+    this.shieldText = this.scene.add.text(110, this.BOTTOM_ROW_Y, '', {
+      fontFamily: font,
+      fontSize: '8px',
       color: '#44aaff',
-      fontStyle: 'bold',
     });
     this.shieldText.setDepth(depth);
 
     // Combo (center, just below score) — hidden when combo = 1
-    this.comboText = this.scene.add.text(GAME_WIDTH / 2, 38, '', {
-      fontSize: '18px',
+    this.comboText = this.scene.add.text(GAME_WIDTH / 2, 32, '', {
+      fontFamily: font,
+      fontSize: '12px',
       color: '#ff6600',
-      fontStyle: 'bold',
       stroke: '#000000',
       strokeThickness: 3,
     });
@@ -120,9 +144,9 @@ export class HUD {
     this.bossBarBg = this.scene.add.graphics();
     this.bossBarFill = this.scene.add.graphics();
     this.bossNameText = this.scene.add.text(GAME_WIDTH / 2, 44, '', {
-      fontSize: '14px',
+      fontFamily: font,
+      fontSize: '8px',
       color: '#ff4444',
-      fontStyle: 'bold',
     });
     this.bossNameText.setOrigin(0.5, 0);
 
@@ -168,7 +192,7 @@ export class HUD {
     else if (ratio < 0.6) color = 0xffff00;
 
     this.healthBarFill.fillStyle(color, 1);
-    this.healthBarFill.fillRect(15, 770, barWidth, 12);
+    this.healthBarFill.fillRect(15, this.HEALTH_BAR_Y, barWidth, 12);
   }
 
   updateGunLevel(level: number): void {
@@ -260,10 +284,10 @@ export class HUD {
   }
 
   private showCenterAnnouncement(message: string, color: string, stroke: string): void {
-    const text = this.scene.add.text(GAME_WIDTH / 2, 400, message, {
-      fontSize: '48px',
+    const text = this.scene.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.3, message, {
+      fontFamily: FONT_FAMILY,
+      fontSize: '24px',
       color,
-      fontStyle: 'bold',
       stroke,
       strokeThickness: 4,
       align: 'center',

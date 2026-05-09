@@ -13,8 +13,15 @@ const TINTS: Record<PowerUpType, number> = {
 const TEXTURES: Record<PowerUpType, string> = {
   gun:    'powerupBolt',
   health: 'powerupShield',
-  bomb:   'powerupBolt',
+  bomb:   'star',
   shield: 'powerupShield',
+};
+
+const SCALES: Record<PowerUpType, number> = {
+  gun:    0.8,
+  health: 0.8,
+  bomb:   0.7,
+  shield: 1.0,
 };
 
 export class PowerUp extends Phaser.Physics.Arcade.Sprite {
@@ -40,7 +47,7 @@ export class PowerUp extends Phaser.Physics.Arcade.Sprite {
     this.setPosition(x, y);
     this.setActive(true);
     this.setVisible(true);
-    this.setScale(0.8);
+    this.setScale(SCALES[type]);
     this.body.enable = true;
     this.body.reset(x, y);
     this.body.setVelocityY(80);
@@ -61,10 +68,11 @@ export class PowerUp extends Phaser.Physics.Arcade.Sprite {
   spawnRecoverable(x: number, y: number): this {
     this.powerUpType = 'gun';
     this.setTexture('powerupBolt');
+    this.setTint(TINTS.gun);
     this.setPosition(x, y);
     this.setActive(true);
     this.setVisible(true);
-    this.setScale(0.8);
+    this.setScale(SCALES.gun);
     this.body.enable = true;
     this.body.reset(x, y);
 
@@ -114,13 +122,4 @@ export class PowerUp extends Phaser.Physics.Arcade.Sprite {
     this.body.setVelocity(0, 0);
     this.scene.tweens.killTweensOf(this);
   }
-}
-
-export function createPowerUpPool(scene: Phaser.Scene, size: number): Phaser.Physics.Arcade.Group {
-  return scene.physics.add.group({
-    classType: PowerUp,
-    maxSize: size,
-    runChildUpdate: true,
-    allowGravity: false,
-  });
 }

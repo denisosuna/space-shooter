@@ -3,12 +3,13 @@ import { GAME_WIDTH, ENEMY_POOL_SIZE } from '../config/game.config';
 import { WAVES, ENEMY_CONFIGS, type WaveDefinition, type Formation } from '../config/waves.config';
 import { BossManager } from './BossManager';
 import type { Enemy } from '../entities/Enemy';
-import { createEnemyPool, createEnemyBulletPool } from '../entities/Enemy';
+import { createEnemyPool, createEnemyBulletPool } from '../entities/pools';
 
 export class WaveManager {
   private scene: Phaser.Scene;
   private enemyPool: Phaser.Physics.Arcade.Group;
   private enemyBulletPool: Phaser.Physics.Arcade.Group;
+  private playerRef: Phaser.GameObjects.Sprite;
   private currentWaveIndex = 0;
   private spawning = false;
   private waveCleared = false;
@@ -16,8 +17,9 @@ export class WaveManager {
   private onWaveComplete?: (waveNum: number) => void;
   private bossManager?: BossManager;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, player: Phaser.GameObjects.Sprite) {
     this.scene = scene;
+    this.playerRef = player;
     this.enemyPool = createEnemyPool(scene, ENEMY_POOL_SIZE);
     this.enemyBulletPool = createEnemyBulletPool(scene);
   }
@@ -155,7 +157,7 @@ export class WaveManager {
         const enemy = this.enemyPool.get(spawn.x, spawn.y, scaledConfig.textureKey) as Enemy | null;
 
         if (enemy) {
-          enemy.init(scaledConfig, this.enemyBulletPool);
+          enemy.init(scaledConfig, this.enemyBulletPool, this.playerRef);
         }
 
         spawnIndex++;

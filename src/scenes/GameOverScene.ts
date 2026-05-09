@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, DEPTH } from '../config/game.config';
+import { GAME_WIDTH, GAME_HEIGHT, DEPTH, FONT_FAMILY } from '../config/game.config';
 
 interface GameOverData {
   score: number;
@@ -20,29 +20,32 @@ export class GameOverScene extends Phaser.Scene {
 
     // Game Over text
     this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.2, 'GAME OVER', {
-      fontSize: '52px',
+      fontFamily: FONT_FAMILY,
+      fontSize: '24px',
       color: '#ff3333',
-      fontStyle: 'bold',
       stroke: '#000000',
       strokeThickness: 6,
     }).setOrigin(0.5);
 
     // Stats
     const statsY = GAME_HEIGHT * 0.4;
-    const lineHeight = 40;
+    const lineHeight = 45;
 
     this.add.text(GAME_WIDTH / 2, statsY, `Score: ${data.score}`, {
-      fontSize: '28px',
+      fontFamily: FONT_FAMILY,
+      fontSize: '12px',
       color: '#ffffff',
     }).setOrigin(0.5);
 
     this.add.text(GAME_WIDTH / 2, statsY + lineHeight, `Coins: ${data.coins}`, {
-      fontSize: '24px',
+      fontFamily: FONT_FAMILY,
+      fontSize: '10px',
       color: '#ffff00',
     }).setOrigin(0.5);
 
-    this.add.text(GAME_WIDTH / 2, statsY + lineHeight * 2, `Wave reached: ${data.wave}`, {
-      fontSize: '24px',
+    this.add.text(GAME_WIDTH / 2, statsY + lineHeight * 2, `Wave: ${data.wave}`, {
+      fontFamily: FONT_FAMILY,
+      fontSize: '10px',
       color: '#00ffff',
     }).setOrigin(0.5);
 
@@ -50,12 +53,12 @@ export class GameOverScene extends Phaser.Scene {
     const isNewHighScore = data.score >= data.highScore && data.score > 0;
     const highScoreText = this.add.text(
       GAME_WIDTH / 2,
-      statsY + lineHeight * 3.5,
-      isNewHighScore ? 'NEW HIGH SCORE!' : `High Score: ${data.highScore}`,
+      statsY + lineHeight * 3,
+      isNewHighScore ? 'NEW HIGH SCORE!' : `Best: ${data.highScore}`,
       {
-        fontSize: isNewHighScore ? '28px' : '22px',
+        fontFamily: FONT_FAMILY,
+        fontSize: isNewHighScore ? '14px' : '10px',
         color: isNewHighScore ? '#ff0' : '#aaa',
-        fontStyle: 'bold',
       },
     ).setOrigin(0.5);
 
@@ -71,9 +74,9 @@ export class GameOverScene extends Phaser.Scene {
 
     // Restart button
     const restartBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.75, '[ TAP TO RESTART ]', {
-      fontSize: '26px',
+      fontFamily: FONT_FAMILY,
+      fontSize: '11px',
       color: '#00ff00',
-      fontStyle: 'bold',
     }).setOrigin(0.5);
 
     this.tweens.add({
@@ -86,9 +89,10 @@ export class GameOverScene extends Phaser.Scene {
 
     // Menu button
     this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.85, '[ MENU ]', {
-      fontSize: '20px',
+      fontFamily: FONT_FAMILY,
+      fontSize: '9px',
       color: '#888888',
-    }).setOrigin(0.5).setInteractive().on('pointerdown', () => {
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
       this.scene.start('MenuScene');
     });
 

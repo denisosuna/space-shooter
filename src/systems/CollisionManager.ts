@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, POWERUP } from '../config/game.config';
+import { GAME_WIDTH, DAMAGE, POWERUP } from '../config/game.config';
 import type { Player } from '../entities/Player';
 import type { Enemy } from '../entities/Enemy';
+import type { BossManager } from './BossManager';
 import { PowerUp, type PowerUpType } from '../entities/PowerUp';
 
 export interface CollisionCallbacks {
@@ -163,7 +164,7 @@ export class CollisionManager {
 
     if (!this.player.invincible) {
       if (!this.player.tryShieldAbsorb()) {
-        this.callbacks.onPlayerHit(15);
+        this.callbacks.onPlayerHit(DAMAGE.enemyBullet);
       }
     }
   }
@@ -176,11 +177,32 @@ export class CollisionManager {
 
     if (!enemy.active || !this.player.isAlive) return;
 
-    enemy.takeDamage(999);
+    enemy.takeDamage(DAMAGE.collisionInstakill);
     if (!this.player.invincible) {
       if (!this.player.tryShieldAbsorb()) {
-        this.callbacks.onPlayerHit(30);
+        this.callbacks.onPlayerHit(DAMAGE.enemyCollision);
       }
     }
+  }
+
+  /** Set up boss-related collisions (player bullets vs boss, boss bullets vs player) */
+  setupBossCollisions(bossManager: BossManager): void {
+    // Player bullets vs boss
+    this.scene.physics.add.overlap(this.player.bullets, bossManager.bossGroup, (_bullet) => {
+      bossManager.hitBoss(_bullet as Phaser.Physics.Arcade.Sprite, this.player.bulletDamage);
+    });
+
+    // Boss bullets vs player
+    this.scene.physics.add.overlap(bossManager.bossBullets, this.player, (_swappedPlayer, _swappedBullet) => {
+      const bullet = _swappedBullet as Phaser.Physics.Arcade.Sprite;
+      if (!bullet.active) return;
+      bullet.setActive(false).setVisible(false);
+      (bullet.body as Phaser.Physics.Arcade.Body).enable = false;
+
+      if (this.player.invincible) return;
+      if (!this.player.tryShieldAbsorb()) {
+        this.callbacks.onPlayerHit(DAMAGE.bossBullet);
+      }
+    });
   }
 }

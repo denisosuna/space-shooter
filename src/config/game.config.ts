@@ -36,3 +36,29 @@ export const DEPTH = {
   powerups: 30,
   hud: 100,
 } as const;
+
+export const DAMAGE = {
+  enemyBullet: 15,
+  bossBullet: 20,
+  enemyCollision: 30,
+  bombToEnemies: 12,
+  bombToBoss: 18,
+  collisionInstakill: 999,
+  healAmount: 25,
+} as const;
+
+export const PROGRESSION = {
+  shipThresholds: [750, 1100, 1800, 3000, 5000],
+  maxShipLevel: 6,
+  healthPerLevel: 10,
+} as const;
+
+export const FONT_FAMILY = '"Press Start 2P", monospace';
+
+export function isReducedEffects(): boolean {
+  return localStorage.getItem('spaceShooter_reducedEffects') === 'true';
+}
+
+export function setReducedEffects(val: boolean): void {
+  localStorage.setItem('spaceShooter_reducedEffects', val ? 'true' : 'false');
+}

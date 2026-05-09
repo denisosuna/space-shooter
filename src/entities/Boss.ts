@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { DEPTH, GAME_WIDTH } from '../config/game.config';
+import { DEPTH, GAME_WIDTH, isReducedEffects } from '../config/game.config';
 import type { BossConfig, BossPhase } from '../config/waves.config';
 
 export class Boss extends Phaser.Physics.Arcade.Sprite {
@@ -137,8 +137,9 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
       if (hpRatio <= this.config.phases[i].hpThreshold) {
         this.currentPhaseIndex = i;
         this.fireTimer = 0;
-        // Red screen flash on phase change
-        this.scene.cameras.main.flash(400, 255, 50, 50);
+        if (!isReducedEffects()) {
+          this.scene.cameras.main.flash(400, 255, 50, 50);
+        }
         break;
       }
     }
@@ -256,7 +257,9 @@ export class Boss extends Phaser.Physics.Arcade.Sprite {
         particles.explode(20);
       });
     }
-    this.scene.cameras.main.shake(500, 0.015);
+    if (!isReducedEffects()) {
+      this.scene.cameras.main.shake(500, 0.015);
+    }
     this.scene.sound.play('sfxLose', { volume: 0.6 });
 
     this.deactivate();

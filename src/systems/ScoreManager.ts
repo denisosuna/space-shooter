@@ -54,6 +54,8 @@ export class ScoreManager {
   reset(): void {
     this._score = 0;
     this._coins = 0;
+    this._combo = 1;
+    this._comboTimer = 0;
   }
 
   private loadHighScore(): number {

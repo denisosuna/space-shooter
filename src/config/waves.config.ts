@@ -120,7 +120,7 @@ export function getBossConfig(wave: number): BossConfig | null {
 export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
   [EnemyType.Black]: {
     type: EnemyType.Black,
-    health: 2,
+    health: 4,
     speed: 95,
     score: 100,
     fireRate: 3500,
@@ -128,7 +128,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
   },
   [EnemyType.Blue]: {
     type: EnemyType.Blue,
-    health: 3,
+    health: 6,
     speed: 105,
     score: 150,
     fireRate: 1700,
@@ -136,7 +136,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
   },
   [EnemyType.Green]: {
     type: EnemyType.Green,
-    health: 5,
+    health: 10,
     speed: 75,
     score: 200,
     fireRate: 1300,
@@ -144,7 +144,7 @@ export const ENEMY_CONFIGS: Record<EnemyType, EnemyConfig> = {
   },
   [EnemyType.Red]: {
     type: EnemyType.Red,
-    health: 7,
+    health: 14,
     speed: 55,
     score: 300,
     fireRate: 1100,
