@@ -46,6 +46,9 @@ export class GameScene extends Phaser.Scene {
     this.hud.updateHealth(this.player.currentHealth);
     this.hud.updateBombs(this.player.bombs);
     this.hud.setOnPause(() => this.togglePause());
+    this.hud.setOnBomb(() => {
+      if (!this.gameOver && !this.isPaused) this.bombManager?.trigger();
+    });
 
     // Keys
     this.bombKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.B);
@@ -242,7 +245,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     const controls = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.75, 
-      'ARROWS / DRAG = Move\nB = Bomb\nESC = Pause', {
+      'DRAG / ARROWS = Move\nBomb button / B = Bomb\nESC / || = Pause', {
       fontFamily: FONT_FAMILY,
       fontSize: '8px',
       color: '#aaaaaa',
@@ -265,7 +268,7 @@ export class GameScene extends Phaser.Scene {
     bg.fillRect(0, GAME_HEIGHT * 0.4, GAME_WIDTH, GAME_HEIGHT * 0.25);
 
     const text = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.5, 
-      'DRAG or ARROWS to move\nB = Bomb    ESC = Pause\nCollect power-ups!', {
+      'DRAG or ARROWS to move\nTap bomb button or B\nCollect power-ups!', {
       fontFamily: FONT_FAMILY,
       fontSize: '9px',
       color: '#ffffff',

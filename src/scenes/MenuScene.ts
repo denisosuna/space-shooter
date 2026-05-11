@@ -56,20 +56,20 @@ export class MenuScene extends Phaser.Scene {
     });
 
     // Controls info
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.72, 'ARROWS / DRAG = Move\nB = Bomb   ESC = Pause', {
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.72, 'DRAG to move\nTap BOMB button or B\nESC / || to Pause', {
       fontFamily: FONT_FAMILY,
-      fontSize: '7px',
+      fontSize: '10px',
       color: '#aaaaaa',
       align: 'center',
-      lineSpacing: 6,
+      lineSpacing: 8,
     }).setOrigin(0.5);
 
     // Accessibility toggle
     const reduced = isReducedEffects();
-    const a11yBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.82, 
+    const a11yBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.84, 
       reduced ? '[x] REDUCE EFFECTS' : '[ ] REDUCE EFFECTS', {
       fontFamily: FONT_FAMILY,
-      fontSize: '7px',
+      fontSize: '10px',
       color: reduced ? '#00ff00' : '#666666',
     });
     a11yBtn.setOrigin(0.5);
@@ -84,17 +84,17 @@ export class MenuScene extends Phaser.Scene {
     // High score
     const highScore = this.getHighScore();
     if (highScore > 0) {
-      this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.89, `HIGH SCORE: ${highScore}`, {
+      this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.91, `HIGH SCORE: ${highScore}`, {
         fontFamily: FONT_FAMILY,
-        fontSize: '8px',
+        fontSize: '10px',
         color: '#ffff00',
       }).setOrigin(0.5);
     }
 
     // Credits
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.95, 'Assets by Kenney.nl (CC0)', {
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT * 0.96, 'Assets by Kenney.nl (CC0)', {
       fontFamily: FONT_FAMILY,
-      fontSize: '6px',
+      fontSize: '7px',
       color: '#666666',
     }).setOrigin(0.5);
 

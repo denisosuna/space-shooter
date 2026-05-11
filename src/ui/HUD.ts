@@ -16,6 +16,7 @@ export class HUD {
   private comboText!: Phaser.GameObjects.Text;
   // Bombs
   private bombText!: Phaser.GameObjects.Text;
+  private bombBtn!: Phaser.GameObjects.Text;
   // Shield
   private shieldText!: Phaser.GameObjects.Text;
   // Pause button
@@ -28,6 +29,7 @@ export class HUD {
   private bossNameText!: Phaser.GameObjects.Text;
 
   private onPauseCallback?: () => void;
+  private onBombCallback?: () => void;
 
   // Derived layout positions
   private readonly HEALTH_BAR_Y = GAME_HEIGHT - 30;
@@ -40,6 +42,10 @@ export class HUD {
 
   setOnPause(cb: () => void): void {
     this.onPauseCallback = cb;
+  }
+
+  setOnBomb(cb: () => void): void {
+    this.onBombCallback = cb;
   }
 
   private create(): void {
@@ -119,6 +125,15 @@ export class HUD {
       color: '#ff8800',
     });
     this.bombText.setDepth(depth);
+
+    // Bomb touch button (bottom-right, large tap target)
+    this.bombBtn = this.scene.add.text(GAME_WIDTH - 15, this.BOTTOM_ROW_Y - 8, '💣', {
+      fontSize: '28px',
+    });
+    this.bombBtn.setOrigin(1, 0.5);
+    this.bombBtn.setDepth(depth);
+    this.bombBtn.setInteractive({ useHandCursor: true });
+    this.bombBtn.on('pointerdown', () => this.onBombCallback?.());
 
     // Shield counter (next to bombs)
     this.shieldText = this.scene.add.text(110, this.BOTTOM_ROW_Y, '', {
@@ -233,6 +248,7 @@ export class HUD {
   updateBombs(count: number): void {
     this.bombText.setText(`BOMB x${count}`);
     this.bombText.setAlpha(count > 0 ? 1 : 0.3);
+    this.bombBtn.setAlpha(count > 0 ? 1 : 0.3);
   }
 
   updateShield(hits: number): void {
